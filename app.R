@@ -17,7 +17,7 @@ ui <- dashboardPage(
       menuItem("CAH groups", tabName = "cahresult")
     ),
     sliderInput("nbGroups", "Number of groups:",
-                min = 2, max = 100, value = 3, step = 1 # TODO dynamic depending on number of rows
+                min = 3, max = 100, value = 4, step = 1 # TODO make max dynamic depending on number of rows
     ),
     checkboxInput("doScaleData", "Center reduce variables:", value = FALSE, width = NULL),
     selectizeInput("cahMethod", "Choose your method:", 
@@ -38,6 +38,7 @@ ui <- dashboardPage(
                 box(plotOutput("plotHeight", height = 400))
               ),
               fluidRow(
+                box(plotOutput("plotDiffHeight", height = 400)),
                 box(plotOutput("plotGroups", height = 400))
               )
       ),
@@ -84,6 +85,7 @@ server <- function(input, output) {
     
     matD <- dist(data2work, method= input$distance)
     results$cahS <- hclust(matD, method = input$cahMethod)
+    results$sortedHeights <- sort(results$cahS$height,dec=T)
     
     results$rescah <- cutree(results$cahS,k=input$nbGroups)
     
@@ -92,15 +94,24 @@ server <- function(input, output) {
   
   output$plotDendo <- renderPlot({
     f <- function(data){
-      plot(data$cahS)
-      # TODO : abline(data$cah$height[input$nbGroups], 0, col = "red")
+      par(mar=c(0, 4, 4, 2)) # c(bottom, left, top, right) : remove margin
+      plot(data$cahS, xlab="", sub="")
+      abline(data$sortedHeights[input$nbGroups-1], 0, col = "red")
     }
     testNoFile(f, dataInput())
   })
   output$plotHeight <- renderPlot({
     f <- function(data){
-      plot(2:(input$nbGroups+6), sort(data$cah$height,dec=T)[1:(input$nbGroups+5)],type="h",ylab="height",xlab="nbGroups", main='Height depending on number of groups')
-      points(input$nbGroups, sort(data$cah$height,dec=T)[input$nbGroups-1], type="p", col = "red", cex=3)
+      plot(2:(input$nbGroups+6), data$sortedHeights[1:(input$nbGroups+5)],type="h",ylab="height",xlab="nbGroups", main='Height depending on number of groups')
+      points(input$nbGroups, data$sortedHeights[input$nbGroups-1], type="p", col = "red", cex=3)
+    }
+    testNoFile(f, dataInput())
+  })
+  output$plotDiffHeight <- renderPlot({
+    f <- function(data){
+      diffHeight = diff(data$sortedHeights)
+      plot(3:(input$nbGroups+7), -diffHeight[1:(input$nbGroups+5)],type="h",ylab="Diff height",xlab="nbGroups", main='Neg differentiated height depending on number of groups')
+      points(input$nbGroups, -diffHeight[input$nbGroups-2], type="p", col = "red", cex=3)
     }
     testNoFile(f, dataInput())
   })
