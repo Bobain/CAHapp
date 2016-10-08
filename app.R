@@ -24,8 +24,11 @@ ui <- dashboardPage(
       # First tab content
       tabItem(tabName = "CAH",
               fluidRow(
-                box(plotOutput("plot1", height = 250)),
-                box(plotOutput("plot2", height = 250))
+                box(plotOutput("plotDendo", height = 400)),
+                box(plotOutput("plotHeight", height = 400))
+              ),
+              fluidRow(
+                box(plotOutput("plotGroups", height = 400))
               )
       ),
       
@@ -71,17 +74,23 @@ server <- function(input, output) {
     return(results)
   })
   
-  output$plot1 <- renderPlot({
+  output$plotDendo <- renderPlot({
     f <- function(data){
       plot(data$cahS)
     }
     testNoFile(f, dataInput())
   })
-  output$plot2 <- renderPlot({
-    f2 <- function(data){
+  output$plotHeight <- renderPlot({
+    f <- function(data){
+      plot(sort(data$cah$height,dec=T)[1:(input$nbGroups+5)],type="h")
+    }
+    testNoFile(f, dataInput())
+  })
+  output$plotGroups <- renderPlot({
+    f3 <- function(data){
       plot(data$df,col=data$rescah)
     }
-    testNoFile(f2, dataInput())
+    testNoFile(f3, dataInput())
   })
   output$rawData <- renderTable({
     f <- function(data){
